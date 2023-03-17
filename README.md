@@ -13,6 +13,8 @@ git clone https://github.com/wolcade/pando-metadata.git
 cd pando-metadata
 pip install piexif
 pip install Pillow
+
+pip install openpyxl
 ```
 
 ## Running the script
@@ -33,4 +35,21 @@ py Test.py --imageDirectory 'PATH_TO_IMAGE_FOLDER' --csvFile 'PATH_TO_CSV_FILE' 
 After metadata insertion, you can validate the results :
 ```bash
 py Test.py --imageDirectory 'PATH_TO_IMAGE_FOLDER' --csvFile 'PATH_TO_CSV_FILE' --verbose --validate
+```
+
+## Running the ProcessRoutes script
+This script allows you to simply provide the directory containing ALL of the routes you want to process.
+
+While this automates most of the process, there are a few things left to fix:
+
+* Currently requires you to rename the processed images folder in each route to 'Images'
+
+* Need to ensure excel to csv extraction/conversion process works completely
+    * also requires the full excel sheet to be included in the folder
+
+* Does not include Bridge template metadata
+
+
+```bash
+py ProcessRoutes.py --imageDirectory 'PATH_TO_ROUTES_DIRECTORY'
 ```
