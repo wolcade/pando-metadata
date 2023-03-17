@@ -6,7 +6,8 @@ import os
 import argparse
 import time
 
-PRECISION_TEN = Decimal('0.0000000001')    
+PRECISION_TEN = Decimal('0.0000000001')
+
 
 def readCSVToDict(csvPath):
     # {[locationKey]: {lat: number, lon: number}}
@@ -15,8 +16,10 @@ def readCSVToDict(csvPath):
         csvFile = csv.DictReader(file)
         for row in csvFile:
             print(row)
-            gpsLocationDict[row["Location"]] = {"lat": row['Rec Lat'], "lon": row["Rec Lon"]}
+            gpsLocationDict[row["Location"]] = {
+                "lat": row['Rec Lat'], "lon": row["Rec Lon"]}
     return gpsLocationDict
+
 
 def main():
     c = getcontext()
@@ -26,12 +29,12 @@ def main():
     writeFlag = 0
 
     # Args: image directory, csv file, writeFlag, verbose, validate
-    parser = argparse.ArgumentParser(description='Insert GPS coordinates into images')
+    parser = argparse.ArgumentParser(
+        description='Insert GPS coordinates into images')
     parser.add_argument('--imageDirectory', type=str, required=True)
     parser.add_argument('--csvFile', type=str, required=True)
-    parser.add_argument('--locationKey', type=str, required=False)
 
-    parser.add_argument('--write' , required=False, action='store_true')
+    parser.add_argument('--write', required=False, action='store_true')
     parser.add_argument('--verbose', required=False, action='store_true')
     parser.add_argument('--validate', required=False, action='store_true')
 
@@ -44,7 +47,7 @@ def main():
     if args.write:
         print('write mode turned on\n')
         writeFlag = 1
-    
+
     folder_path = args.imageDirectory
     if not os.path.exists(folder_path):
         raise ValueError(f'Invalid Path. Cannot find {folder_path}.')
@@ -60,15 +63,16 @@ def main():
 
     gpsLocationDictionary = readCSVToDict(csv_path)
     imageCount = 0
-    
-    print(f'\nReading Images from {folder_path}.\n')
-    
-    if writeFlag: print(f' Writing new GPS images to {output_path}\n')
 
-    #Open directory and loop over images
+    print(f'\nReading Images from {folder_path}.\n')
+
+    if writeFlag:
+        print(f' Writing new GPS images to {output_path}\n')
+
+    # Open directory and loop over images
     directory = os.fsencode(folder_path)
     files = os.listdir(directory)
-    #TODO: May include folders too
+    # TODO: May include folders too
     fileList = [os.fsdecode(f) for f in files]
     print('Total files in directory... ', len(fileList))
 
@@ -87,11 +91,12 @@ def main():
             if verboseFlag:
                 print(f'Processing Location {location} from csv')
 
-            #Grab lat/lon from csv data
+            # Grab lat/lon from csv data
             gpsData = gpsLocationDictionary[location.upper()]
 
             if args.validate:
-                validationStatus = validateGPSData(img_path, gpsData, location, verboseFlag)
+                validationStatus = validateGPSData(
+                    img_path, gpsData, location, verboseFlag)
                 if validationStatus == 1:
                     success.append(location)
                 if validationStatus == 0:
@@ -99,50 +104,60 @@ def main():
                 if validationStatus == -1:
                     failure.append(location)
             else:
-                setGPSData(img_path, new_img_path, gpsData, location, writeFlag, verboseFlag)
+                setGPSData(img_path, new_img_path, gpsData,
+                           location, writeFlag, verboseFlag)
 
             imageCount += 1
         else:
             print('skipping ', file)
 
-    print(f'Completed Processing {folder_path}. {imageCount} images processed.\n')
+    print(
+        f'Completed Processing {folder_path}. {imageCount} images processed.\n')
     if args.validate:
-        print(f'\nVALIDATION SUMMARY\n\nSuccess:\n{success}\n{len(success)} files\n\nFailure\n{failure}\n{len(failure)} files\n\nMissing GPS Data\n{missing}\n{len(missing)} files')
+        print(
+            f'\nVALIDATION SUMMARY\n\nSuccess:\n{success}\n{len(success)} files\n\nFailure\n{failure}\n{len(failure)} files\n\nMissing GPS Data\n{missing}\n{len(missing)} files')
+
 
 def setGPSData(img_path, new_img_path, gpsData, location, writeFlag, verboseFlag):
-    #For each image, load the exif
-    #set the tags for GPS
-    #insert new tags into image
-    #save image
+    # For each image, load the exif
+    # set the tags for GPS
+    # insert new tags into image
+    # save image
 
     im = Image.open(img_path)
     exif_dict = piexif.load(img_path)
 
     if gpsData["lat"] != '' and gpsData["lon"] != '':
-        exif_dict["GPS"][piexif.GPSIFD.GPSLatitude] = convertDegreesToDMS(gpsData["lat"])
-        exif_dict["GPS"][piexif.GPSIFD.GPSLongitude] = convertDegreesToDMS(gpsData["lon"])
+        exif_dict["GPS"][piexif.GPSIFD.GPSLatitude] = convertDegreesToDMS(
+            gpsData["lat"])
+        exif_dict["GPS"][piexif.GPSIFD.GPSLongitude] = convertDegreesToDMS(
+            gpsData["lon"])
         exif_dict["GPS"][piexif.GPSIFD.GPSLongitudeRef] = "W"
         exif_dict["GPS"][piexif.GPSIFD.GPSLatitudeRef] = "N"
 
         if verboseFlag:
-            print(f'    Set GPSLatitude: {gpsData["lat"]} to {exif_dict["GPS"][piexif.GPSIFD.GPSLatitude]}')
-            print(f'    Set GPSLongitude: {gpsData["lon"]} to {exif_dict["GPS"][piexif.GPSIFD.GPSLongitude]}')
-            print(f'    Set GPSLatitudeRef to {exif_dict["GPS"][piexif.GPSIFD.GPSLatitudeRef]}')
-            print(f'    Set GPSLongitudeRef to {exif_dict["GPS"][piexif.GPSIFD.GPSLongitudeRef]}')
+            print(
+                f'    Set GPSLatitude: {gpsData["lat"]} to {exif_dict["GPS"][piexif.GPSIFD.GPSLatitude]}')
+            print(
+                f'    Set GPSLongitude: {gpsData["lon"]} to {exif_dict["GPS"][piexif.GPSIFD.GPSLongitude]}')
+            print(
+                f'    Set GPSLatitudeRef to {exif_dict["GPS"][piexif.GPSIFD.GPSLatitudeRef]}')
+            print(
+                f'    Set GPSLongitudeRef to {exif_dict["GPS"][piexif.GPSIFD.GPSLongitudeRef]}')
             print('')
 
     else:
-        if verboseFlag: print(f'    Missing Coordinates for location {location}\n')
+        if verboseFlag:
+            print(f'    Missing Coordinates for location {location}\n')
 
-   
     if writeFlag == 1:
         exif_bytes = piexif.dump(exif_dict)
         piexif.insert(exif_bytes, img_path)
-        #im.save(new_img_path,"jpeg",exif=exif_bytes)
+        # im.save(new_img_path,"jpeg",exif=exif_bytes)
         print(new_img_path + ' saved successfully')
         print('')
 
-       
+
 def convertDegreesToDMS(decimalDegrees):
     # Set precision to at least 10 decimal places. Need to validate further
     c = getcontext()
@@ -157,6 +172,7 @@ def convertDegreesToDMS(decimalDegrees):
     (seconds_num, seconds_denominator) = abs((seconds)).as_integer_ratio()
     return ((degrees, 1), (minutes, 1), (seconds_num, seconds_denominator))
 
+
 def convertDegreesToDMSBridge(decimalDegrees):
     # Set precision to at least 10 decimal places. Need to validate further
     c = getcontext()
@@ -170,15 +186,18 @@ def convertDegreesToDMSBridge(decimalDegrees):
     minutes = abs(minutes)
     return (degrees, minutes)
 
+
 def convertDMSToDD(dmsTuple):
 
     degrees = Decimal(dmsTuple[0][0])
     minutes = Decimal(dmsTuple[1][0])
     seconds = Decimal(dmsTuple[2][0]) / Decimal(dmsTuple[2][1])
 
-    decimalDegrees = Decimal(degrees) + Decimal(minutes / 60) + Decimal(seconds / (60 * 60))
+    decimalDegrees = Decimal(
+        degrees) + Decimal(minutes / 60) + Decimal(seconds / (60 * 60))
 
     return Decimal(decimalDegrees)
+
 
 def validateGPSData(new_img_path, gpsData, location, verbose):
 
@@ -186,7 +205,7 @@ def validateGPSData(new_img_path, gpsData, location, verbose):
         im = Image.open(new_img_path)
         mTime = os.path.getmtime(new_img_path)
         modifiedTime = time.ctime(mTime)
-        
+
         exif_dict = piexif.load(im.info["exif"])
 
         newGPSLat = exif_dict["GPS"][piexif.GPSIFD.GPSLatitude]
@@ -204,10 +223,12 @@ def validateGPSData(new_img_path, gpsData, location, verbose):
             print(f"    Reading Image {location} modified at {modifiedTime}")
             print(f"    DMS Coordinates in Image: {newGPSLat}, {newGPSLon}")
 
-
-            print(f"    converted exif GPS lat {decimalDegreesLat} equals csv lat {gpsDataLat}: {decimalDegreesLat == gpsDataLat}")
-            print(f"    converted exif GPS lon {decimalDegreesLon} equals csv lon {gpsDataLon}: {decimalDegreesLon == gpsDataLon}")
-            print(f"    DMS Coordinates in Bridge Format: {convertDegreesToDMSBridge(decimalDegreesLat)}, {convertDegreesToDMSBridge(decimalDegreesLon)}")
+            print(
+                f"    converted exif GPS lat {decimalDegreesLat} equals csv lat {gpsDataLat}: {decimalDegreesLat == gpsDataLat}")
+            print(
+                f"    converted exif GPS lon {decimalDegreesLon} equals csv lon {gpsDataLon}: {decimalDegreesLon == gpsDataLon}")
+            print(
+                f"    DMS Coordinates in Bridge Format: {convertDegreesToDMSBridge(decimalDegreesLat)}, {convertDegreesToDMSBridge(decimalDegreesLon)}")
 
             print('')
 
@@ -217,8 +238,10 @@ def validateGPSData(new_img_path, gpsData, location, verbose):
             return -1
 
     else:
-        if verbose: print(f"    missing gps data for {location}")
+        if verbose:
+            print(f"    missing gps data for {location}")
         return 0
+
 
 if __name__ == "__main__":
     main()
