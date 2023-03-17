@@ -65,6 +65,8 @@ def processRoutes(folder_path):
         if len(excelFiles) > 0:
             createGPSCSVFromExcel(os.path.join(
                 routeFolderPath, excelFiles[0]), routeFolderPath)
+        else:
+            raise ValueError(f'Missing required file. Cannot find excel file with route data.')
 
         # create new folder for images if does not already exist
         newFolder = os.path.join(folder_path, route) + "/imagesWithGPS"
