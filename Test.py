@@ -5,6 +5,7 @@ from PIL import Image, ExifTags
 import os
 import argparse
 import time
+import re
 
 PRECISION_TEN = Decimal('0.0000000001')
 
@@ -86,7 +87,7 @@ def main():
         new_img_path = f'{output_path}/{file}'
 
         if file.endswith('.jpg') and not (file.startswith('EndSlate') or file.startswith('OpenSlate')):
-            location = file.split('-')[0]
+            location = re.split('_|-', file)[0]
 
             if verboseFlag:
                 print(f'Processing Location {location} from csv')
